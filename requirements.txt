@@ -1,3 +1,7 @@
 numpy
 torch
 timm
+matplotlib
+torchvision
+tqdm
+torchsummary
