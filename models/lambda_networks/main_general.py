@@ -5,6 +5,7 @@ from .data_preprocessing import data_preprocessing
 from .model_preparation import model_preparation
 from .log_data import log_data
 
+
 import torch
 
 import os
@@ -16,9 +17,9 @@ import time
 
 if __name__ == "__main__":
     #%% Input parameters
-    np.random.seed(0)
-    torch.manual_seed(0)
-    torch.cuda.manual_seed(0)
+    np.random.seed(42)
+    torch.manual_seed(42)
+    torch.cuda.manual_seed(42)
     args = load_user_input()
 
     # Map the network type to its name
@@ -27,13 +28,15 @@ if __name__ == "__main__":
     else:
         model_name = 'Baseline'
 
+    base_dir_name = f"{args.dataset}_{model_name}_ablation_Tmax_is_2x_epoch_size"
+
     # Check whether the checkpoint folder exists. If not, create it.
-    folder_checkpoint = os.path.join(args.cp_dir, model_name)   # Path for storing the model info
+    folder_checkpoint = os.path.join(args.cp_dir, base_dir_name)   # Path for storing the model info
     if not os.path.exists(folder_checkpoint):
         os.makedirs(folder_checkpoint)
 
     # Check whether the logs folder exists. If not, create it.
-    logs_dir = ".\\logs\\" + model_name
+    logs_dir = os.path.join(".\\logs", base_dir_name)
     if not os.path.exists(logs_dir):   # Check whether the logs folder exists
         os.makedirs(logs_dir)
 
@@ -42,7 +45,7 @@ if __name__ == "__main__":
 
     #%% Prepare the model
     writer, resnet_nn, criterion, optimizer, label_smoothing, scheduler1, scheduler2, device, max_epoch, f = \
-        model_preparation(args, input_lst, model_name)
+        model_preparation(args, input_lst, model_name, base_dir_name)
 
     #%% Train the resnet
     total_train_time = 0

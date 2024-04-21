@@ -9,7 +9,7 @@ def test(test_loader, net, criterion, device):
         net: Neural network model.
         criterion: Loss function (e.g. cross-entropy loss).
     """
-
+    net.eval()
     avg_loss = 0
     correct = 0
     total = 0
