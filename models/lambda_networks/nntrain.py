@@ -9,14 +9,22 @@ def train(train_loader, net, optimizer, criterion, device, label_smoothing, smoo
         net: Neural network model.
         optimizer: Optimizer (e.g. SGD).
         criterion: Loss function (e.g. cross-entropy loss).
-    """
+        device: Device ('cuda' or 'cpu') the training is performed on.
+        label_smoothing: Label smoothing component if smoothing is True.
+        smoothing: Boolean, if True applies label smoothing.
 
+    Returns:
+        Average loss and accuracy for this training epoch.
+    """
+    # Added a net.train() cause it seems they forgot to add it?
+    net.train()
     avg_loss = 0
     correct = 0
     total = 0
 
     # iterate through batches
     for i, data in enumerate(train_loader):
+
         # get the inputs; data is a list of [inputs, labels]
         inputs, labels = data
 

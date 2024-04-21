@@ -13,7 +13,7 @@ from datetime import datetime
 import socket
 
 
-def model_preparation(args, input_lst, model_name):
+def model_preparation(args, input_lst, model_name, base_dir_name):
     '''
     Select the right model according to the model selected
     Args:
@@ -34,20 +34,21 @@ def model_preparation(args, input_lst, model_name):
         f: logging file
     '''
 
+    num_classes = 100 if args.dataset == 'CIFAR100' else 10
     # Choose model file according to the chosen model type
     if args.model_type:
-        resnet_nn = resnet50_lambda(pretrained=False, progress=True, num_classes=10, context_size=args.context_size,
+        resnet_nn = resnet50_lambda(pretrained=False, progress=True, num_classes=num_classes, context_size=args.context_size,
                                     qk_size=args.qk_size, heads=args.heads, input_size=args.input_size,
                                     zero_init_residual=args.BN_gamma)
     else:
-        resnet_nn = resnet50(pretrained=False, progress=True, num_classes=10, zero_init_residual=True)
+        resnet_nn = resnet50(pretrained=False, progress=True, num_classes=num_classes, zero_init_residual=True)
 
     # Print network architecture using torchsummary
     summary(resnet_nn, tuple(input_lst[0].shape), device='cpu')
 
     # Create a writer to write to Tensorboard
     current_time = datetime.now().strftime('%b%d_%H-%M-%S')
-    log_dir = os.path.join('runs', model_name, current_time + '_lr' + str(args.initial_lr) + '_' + socket.gethostname())
+    log_dir = os.path.join('runs', base_dir_name, current_time + '_lr' + str(args.initial_lr) + '_' + socket.gethostname())
     writer = SummaryWriter(log_dir)
 
     # Check if GPU available
@@ -77,7 +78,7 @@ def model_preparation(args, input_lst, model_name):
 
     # Create cosine scheduler
     steps = args.epochs - args.th       # This is Tmax according to the documentation of cosine annealing
-    scheduler2 = optim.lr_scheduler.CosineAnnealingLR(optimizer, steps)
+    scheduler2 = optim.lr_scheduler.CosineAnnealingLR(optimizer, steps*2)
 
     # Restart from checkpoint
     max_epoch = 0
@@ -98,7 +99,7 @@ def model_preparation(args, input_lst, model_name):
             print("=> no checkpoint found at '{}'".format(folder_checkpoint))
 
     # Create file for storing the logs
-    f_path = ".\\logs\\" + model_name + "\\" +\
+    f_path = ".\\logs\\" + base_dir_name + "\\" +\
              current_time + '_lr' + str(args.initial_lr) + '_' + socket.gethostname() + ".txt"
     f = open(f_path, "a")
 

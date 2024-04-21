@@ -29,21 +29,28 @@ def data_preprocessing(args):
         torchvision.transforms.ToTensor(),
         torchvision.transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])
 
+    if args.dataset == 'CIFAR100':
+        dataset_class = torchvision.datasets.CIFAR100
+        root_train = ".\\CIFAR_100_train"
+        root_test = ".\\CIFAR_100_test"
+    else:
+        dataset_class = torchvision.datasets.CIFAR10
+        root_train = ".\\CIFAR_10_train"
+        root_test = ".\\CIFAR_10_test"
+
     # Preparing the dataset
-    download_train = False if os.path.exists(".\\CIFAR_10_train") else True
-    download_test = False if os.path.exists(".\\CIFAR_10_test") else True
+    download_train = not os.path.exists(root_train)
+    download_test = not os.path.exists(root_test)
 
-    cifar10_train = torchvision.datasets.CIFAR10(root=".\\CIFAR_10_train", train=True, download=download_train,
-                                                 transform=train_transform)
-    cifar10_plot = torchvision.datasets.CIFAR10(root=".\\CIFAR_10_train", train=True, download=download_train,
-                                                 transform=plot_transform)
-    cifar10_test = torchvision.datasets.CIFAR10(root=".\\CIFAR_10_test", train=False, download=download_test,
-                                                transform=test_transform)
+    train_dataset = dataset_class(root=root_train, train=True, download=download_train, transform=train_transform)
+    plot_dataset = dataset_class(root=root_train, train=True, download=False, transform=plot_transform)
+    test_dataset = dataset_class(root=root_test, train=False, download=download_test, transform=test_transform)
 
-    # Create train and test data loaders, iterators
-    train_loader = DataLoader(cifar10_train, batch_size=args.b_size, shuffle=True)
-    plot_loader = DataLoader(cifar10_plot, batch_size=args.b_size, shuffle=True)
-    test_loader = DataLoader(cifar10_test, batch_size=args.b_size, shuffle=True)
+    # Create train and test data loaders
+    train_loader = DataLoader(train_dataset, batch_size=args.b_size, shuffle=True)
+    plot_loader = DataLoader(plot_dataset, batch_size=args.b_size, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=args.b_size, shuffle=True)
+
 
     # Obtain one data training batch
     input_lst, label = next(iter(plot_loader))
