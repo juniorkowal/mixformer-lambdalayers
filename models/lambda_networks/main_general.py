@@ -27,8 +27,8 @@ if __name__ == "__main__":
         model_name = 'Lambda'
     else:
         model_name = 'Baseline'
-
-    base_dir_name = f"{args.dataset}_{model_name}_ablation_Tmax_is_2x_epoch_size"
+    extra_params = ""
+    base_dir_name = f"{args.dataset}_{model_name}{extra_params}"
 
     # Check whether the checkpoint folder exists. If not, create it.
     folder_checkpoint = os.path.join(args.cp_dir, base_dir_name)   # Path for storing the model info
