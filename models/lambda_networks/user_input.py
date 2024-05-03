@@ -1,7 +1,7 @@
 import argparse
 
 # %% Input parameters
-def load_user_input():
+def load_user_input(dataset="CIFAR100", batch_size=128):
     '''
     Function that stores the user input
     Returns:
@@ -10,7 +10,7 @@ def load_user_input():
     '''
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--b_size', type=int, default=128, help='Batch size: Table 4 of the original paper')
+    parser.add_argument('--b_size', type=int, default=batch_size, help='Batch size: Table 4 of the original paper')
     parser.add_argument('--context_size', type=int, default=64, help='Context size: m')
     parser.add_argument('--input_size', type=int, default=64, help='Input size: n')
     parser.add_argument('--qk_size', type=int, default=16, help='Key size: k')
@@ -29,5 +29,6 @@ def load_user_input():
     parser.add_argument('--BN_gamma', type=bool, default=True,
                         help='Initialisation value of the gamma parameter of the last BN layer')
     parser.add_argument('--cp_dir', type=str, default=".\\Checkpoints", help='Base checkpoint folder')
+    parser.add_argument('--dataset', type=str, default=dataset, help='Dataset')
 
     return parser.parse_args()

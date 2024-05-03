@@ -1,6 +1,7 @@
 import torchvision
 from torch.utils.data import DataLoader
 import os
+import torch
 import matplotlib.pyplot as plt
 
 def data_preprocessing(args):
@@ -46,20 +47,23 @@ def data_preprocessing(args):
     plot_dataset = dataset_class(root=root_train, train=True, download=False, transform=plot_transform)
     test_dataset = dataset_class(root=root_test, train=False, download=download_test, transform=test_transform)
 
+    generator = torch.Generator().manual_seed(42)
+    train_dataset, valid_dataset = torch.utils.data.random_split(train_dataset, [0.8, 0.2], generator=generator)
+
     # Create train and test data loaders
-    train_loader = DataLoader(train_dataset, batch_size=args.b_size, shuffle=True)
-    plot_loader = DataLoader(plot_dataset, batch_size=args.b_size, shuffle=True)
+    train_loader = DataLoader(train_dataset, batch_size=args.b_size, shuffle=True, pin_memory=True)
+    valid_loader = DataLoader(valid_dataset, batch_size=args.b_size, shuffle=True, pin_memory=True)
     test_loader = DataLoader(test_dataset, batch_size=args.b_size, shuffle=True)
 
 
     # Obtain one data training batch
-    input_lst, label = next(iter(plot_loader))
+    # input_lst, label = next(iter(plot_loader))
 
     # Plot a random group of images from the training set
-    plt.figure()
-    for i in range(args.n_rows_plot*args.n_col_plot):
-        plt.subplot(args.n_rows_plot, args.n_col_plot, i+1)
-        plt.imshow(input_lst[i].permute(1, 2, 0))
-    plt.show()
+    # plt.figure()
+    # for i in range(args.n_rows_plot*args.n_col_plot):
+    #     plt.subplot(args.n_rows_plot, args.n_col_plot, i+1)
+    #     plt.imshow(input_lst[i].permute(1, 2, 0))
+    # plt.show()
 
-    return train_loader, test_loader, input_lst
+    return train_loader, valid_loader, test_loader
