@@ -221,9 +221,7 @@ def train(ab, c):
                   loss_fn = torch.nn.CrossEntropyLoss()
 
             ##Training loop
-            if OPTIMIZER == 'SGD':
-                  optimizer = torch.optim.SGD(m.parameters(), lr=LEARNING_RATE, momentum=0.9, weight_decay=WEIGHT_DECAY)
-            elif OPTIMIZER == 'Adam':
+            if OPTIMIZER == 'Adam':
                   optimizer = torch.optim.Adam(m.parameters(), lr=LEARNING_RATE)
             elif OPTIMIZER == 'AdamW':
                   optimizer = torch.optim.AdamW(m.parameters(), weight_decay=W_DECAY, betas=[B1,B2], lr=LEARNING_RATE)
