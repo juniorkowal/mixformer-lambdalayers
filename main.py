@@ -33,53 +33,78 @@ def check_outputs(outputs, labels):
       return correct, incorrect
 
 
-def train(ab, dataset):
+def train(ab, c):
       try:
             BEST_ACC = 0
             BEST_WEIGHTS = None
 
-            MODEL = 'B1'
-            DATASET = dataset
+            # MODEL = 'B1'
+            # DATASET = dataset
+            # CLASSNUM = 10 if DATASET == 'CIFAR10' else 100
+            # DEBUG = False
+            # if MODEL in ['B0', 'B1', 'B2', 'B3']:
+            #       LEARNING_RATE = 8e-4 #(B0-B3)
+            #       # LEARNING_RATE = 0.001 #experimental
+            #       W_DECAY = 0.04 #(B0-B3)
+            # elif MODEL in ['B4', 'B5', 'B6']:
+            #       LEARNING_RATE = 1e-3 #(B4-B6)
+            #       W_DECAY = 0.05 #(B4-B6)
+            # else:
+            #       raise NotImplementedError(f'Incorrect model name: {MODEL}')
+
+            # if MODEL in ['B0', 'B1', 'B2', 'B3', 'B4']:
+            #       WARMUP_EPOCHS = 20 #(B0-B4)
+            #       # WARMUP_EPOCHS = 10 #Experimental
+            # elif MODEL in ['B5', 'B6']:
+            #       WARMUP_EPOCHS = 40 #(B5-B6)
+            # else:
+            #       raise NotImplementedError(f'Incorrect model name: {MODEL}')
+            # WARMUP_LR = 1e-5
+            # # WARMUP_LR = 0.001
+
+            # B1 = 0.9
+            # B2 = 0.999
+
+            # MIN_LR = 1e-6
+            # BATCH_SIZE=256
+            # LOSS = 'Crossentropy'
+            # OPTIMIZER = 'AdamW'
+            # SCHEDULER = 'cosine'
+            # EPOCHS = 200
+
+            MODEL = c['MODEL']
+            DATASET = c['DATASET']
             CLASSNUM = 10 if DATASET == 'CIFAR10' else 100
-            DEBUG = False
-            if MODEL in ['B0', 'B1', 'B2', 'B3']:
-                  # LEARNING_RATE = 8e-4 #(B0-B3)
-                  LEARNING_RATE = 0.001 #experimental
-                  W_DECAY = 0.04 #(B0-B3)
-            elif MODEL in ['B4', 'B5', 'B6']:
-                  LEARNING_RATE = 1e-3 #(B4-B6)
-                  W_DECAY = 0.05 #(B4-B6)
-            else:
-                  raise NotImplementedError(f'Incorrect model name: {MODEL}')
+            DEBUG = c['DEBUG']
+            LEARNING_RATE = c['LEARNING_RATE']
+            W_DECAY = c['W_DECAY']
+            WARMUP_EPOCHS = c['WARMUP_EPOCHS']
+            WARMUP_LR = c['WARMUP_LR']
+            B1 = c['B1']
+            B2 = c['B2']
+            MIN_LR = c['MIN_LR']
+            BATCH_SIZE = c['BATCH_SIZE']
+            LOSS = c['LOSS']
+            OPTIMIZER = c['OPTIMIZER']
+            SCHEDULER = c['SCHEDULER']
+            EPOCHS = c['EPOCHS']
+            VALID_SPLIT = c['VAL_SPLIT']
 
-            if MODEL in ['B0', 'B1', 'B2', 'B3', 'B4']:
-                  WARMUP_EPOCHS = 20 #(B0-B4)
-                  # WARMUP_EPOCHS = 10 #Experimental
-            elif MODEL in ['B5', 'B6']:
-                  WARMUP_EPOCHS = 40 #(B5-B6)
-            else:
-                  raise NotImplementedError(f'Incorrect model name: {MODEL}')
-            WARMUP_LR = 1e-7
-            # WARMUP_LR = 0.001
-
-            B1 = 0.9
-            B2 = 0.999
-
-            MIN_LR = 1e-6
-            BATCH_SIZE=256
-            LOSS = 'Crossentropy'
-            OPTIMIZER = 'AdamW'
-            SCHEDULER = 'cosine'
-            EPOCHS = 150
             device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
             inp = load_user_input(dataset=DATASET, batch_size=BATCH_SIZE)
-            data_loader_train, data_loader_valid, data_loader_test = data_preprocessing(inp)
+            if VALID_SPLIT:
+                  print(f'{VALID_SPLIT=} : Hyperparameters tuning mode')
+                  data_loader_train, data_loader_valid, _ = data_preprocessing(inp, val_split=VALID_SPLIT)
+            else:
+                  print(f'{VALID_SPLIT=} : Evaluating mode (test set used as validation set)')
+                  data_loader_train, _, data_loader_valid = data_preprocessing(inp, val_split=VALID_SPLIT)
             
             now = datetime.now()
             RES_PATH_FOLDER = f'./weights/{MODEL}/{now.strftime("%Y-%m-%d %H_%M_%S")} {LOSS} {DATASET} {LEARNING_RATE:.0e} sample'
             RES_PATH = f'{RES_PATH_FOLDER}/BEST.pt'
 
+            print(f'TRAINING MODEL {MODEL}, ablation study: #{ab}')
             if MODEL == 'B0':
                   m = MixFormer_B0(
                   img_size=32,
@@ -203,9 +228,14 @@ def train(ab, dataset):
             elif OPTIMIZER == 'AdamW':
                   optimizer = torch.optim.AdamW(m.parameters(), weight_decay=W_DECAY, betas=[B1,B2], lr=LEARNING_RATE)
             if SCHEDULER == 'cosine':
-                  scheduler2 = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, eta_min=MIN_LR, T_max=EPOCHS-WARMUP_EPOCHS)
+                  scheduler2 = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, eta_min=MIN_LR, T_max=200-WARMUP_EPOCHS)
                   # scheduler1 = torch.optim.lr_scheduler.ConstantLR(optimizer, factor=WARMUP_LR/LEARNING_RATE, total_iters=WARMUP_EPOCHS)
                   scheduler1 = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=WARMUP_LR/LEARNING_RATE, end_factor=1.0, total_iters=WARMUP_EPOCHS)
+                  scheduler = torch.optim.lr_scheduler.SequentialLR(optimizer, schedulers=[scheduler1, scheduler2], milestones=[WARMUP_EPOCHS])
+            if SCHEDULER == 'const+cosine':
+                  scheduler2 = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, eta_min=MIN_LR, T_max=200-WARMUP_EPOCHS)
+                  scheduler1 = torch.optim.lr_scheduler.ConstantLR(optimizer, factor=1.0, total_iters=WARMUP_EPOCHS)
+                  # scheduler1 = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=WARMUP_LR/LEARNING_RATE, end_factor=1.0, total_iters=WARMUP_EPOCHS)
                   scheduler = torch.optim.lr_scheduler.SequentialLR(optimizer, schedulers=[scheduler1, scheduler2], milestones=[WARMUP_EPOCHS])
 
             # plot_scheduler(300, optimizer, scheduler)
@@ -335,8 +365,117 @@ def train(ab, dataset):
             wandb.finish()
                         
 if __name__ == '__main__':
-      # for dataset in ['CIFAR10', 'CIFAR100']:
-      #       for ablation in range(7):
-      #             train(ablation,dataset)
+      # base_config = {
+      # 'MODEL': 'B1',
+      # 'DATASET': 'CIFAR10',
+      # 'DEBUG': False,
+      # 'LEARNING_RATE': 0.001,
+      # 'W_DECAY': 0.04,
+      # 'WARMUP_EPOCHS': 20,
+      # 'WARMUP_LR': 1e-5,
+      # 'B1': 0.9,
+      # 'B2': 0.999,
+      # 'MIN_LR': 1e-6,
+      # 'BATCH_SIZE': 256,
+      # 'LOSS': 'Crossentropy',
+      # 'OPTIMIZER': 'AdamW',
+      # 'SCHEDULER': 'cosine',
+      # 'EPOCHS': 200
+      # }
+      configs = [
+            # {
+            # 'MODEL': 'B1',
+            # 'DATASET': 'CIFAR10',
+            # 'DEBUG': False,
+            # 'LEARNING_RATE': 0.001,
+            # 'W_DECAY': 0.04,
+            # 'WARMUP_EPOCHS': 10, ######
+            # 'WARMUP_LR': 1e-5,
+            # 'B1': 0.9,
+            # 'B2': 0.999,
+            # 'MIN_LR': 1e-6,
+            # 'BATCH_SIZE': 256,
+            # 'LOSS': 'Crossentropy',
+            # 'OPTIMIZER': 'AdamW',
+            # 'SCHEDULER': 'cosine',
+            # 'EPOCHS': 200
+            # },
+            # {
+            # 'MODEL': 'B1',
+            # 'DATASET': 'CIFAR10',
+            # 'DEBUG': False,
+            # 'LEARNING_RATE': 0.001,
+            # 'W_DECAY': 0.04,
+            # 'WARMUP_EPOCHS': 20,
+            # 'WARMUP_LR': 1e-5,
+            # 'B1': 0.9,
+            # 'B2': 0.999,
+            # 'MIN_LR': 1e-6,
+            # 'BATCH_SIZE': 256,
+            # 'LOSS': 'Crossentropy',
+            # 'OPTIMIZER': 'AdamW',
+            # 'SCHEDULER': 'const+cosine', ######
+            # 'EPOCHS': 200
+            # },
+            # {
+            # 'MODEL': 'B1',
+            # 'DATASET': 'CIFAR10',
+            # 'DEBUG': False,
+            # 'LEARNING_RATE': 0.006,  ######
+            # 'W_DECAY': 0.04,
+            # 'WARMUP_EPOCHS': 20,
+            # 'WARMUP_LR': 1e-5,
+            # 'B1': 0.9,
+            # 'B2': 0.999,
+            # 'MIN_LR': 1e-6,
+            # 'BATCH_SIZE': 256,
+            # 'LOSS': 'Crossentropy',
+            # 'OPTIMIZER': 'AdamW',
+            # 'SCHEDULER': 'cosine',
+            # 'EPOCHS': 200
+            # },
+            # {
+            # 'MODEL': 'B1',
+            # 'DATASET': 'CIFAR10',
+            # 'DEBUG': False,
+            # 'LEARNING_RATE': 0.006,  ######
+            # 'W_DECAY': 0.04,
+            # 'WARMUP_EPOCHS': 20,
+            # 'WARMUP_LR': 1e-5,
+            # 'B1': 0.9,
+            # 'B2': 0.999,
+            # 'MIN_LR': 1e-6,
+            # 'BATCH_SIZE': 256,
+            # 'LOSS': 'Crossentropy',
+            # 'OPTIMIZER': 'AdamW',
+            # 'SCHEDULER': 'const+cosine',  ######
+            # 'EPOCHS': 200
+            # },
+            {
+            'MODEL': 'B1',
+            'DATASET': 'CIFAR10',
+            'DEBUG': False,
+            'LEARNING_RATE': 0.006,  ######
+            'W_DECAY': 0.04,
+            'WARMUP_EPOCHS': 50,
+            'WARMUP_LR': 1e-5,
+            'B1': 0.9,
+            'B2': 0.999,
+            'MIN_LR': 1e-6,
+            'BATCH_SIZE': 256,
+            'LOSS': 'Crossentropy',
+            'OPTIMIZER': 'AdamW',
+            'SCHEDULER': 'const+cosine',  ######
+            'EPOCHS': 200,
+            'VAL_SPLIT': False
+            },
 
-      train(0, 'CIFAR10')
+      ]
+      # for config in configs:
+      #       # config['DEBUG'] = True
+      #       # config['EPOCHS'] = 1
+      #       train(0, 'CIFAR10', configs[0])
+      for ablation in range(7):
+            # configs[0]['DEBUG'] = True
+            # configs[0]['EPOCHS'] = 1
+            train(ablation,configs[0])
