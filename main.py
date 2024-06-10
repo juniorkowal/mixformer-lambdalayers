@@ -244,6 +244,7 @@ def train(ab, c):
                         "warmup_lr": WARMUP_LR,
                         "w_decay": W_DECAY,
                         "min_lr": MIN_LR,
+                        "ablation": ab,
                         "note": now
                         }
                   )
