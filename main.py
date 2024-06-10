@@ -13,6 +13,8 @@ from models.ablation3 import MixFormer_B0_AB3, MixFormer_B1_AB3, \
 from models.ablation4 import MixFormer_B0_AB4, MixFormer_B1_AB4, \
       MixFormer_B2_AB4, MixFormer_B3_AB4, MixFormer_B4_AB4, MixFormer_B5_AB4, MixFormer_B6_AB4
 
+from models.hybrid_test import LambdaMixFormer
+
 from models.lambda_networks import LambdaLayer
 from models.lambda_networks.data_preprocessing import data_preprocessing
 from models.lambda_networks.user_input import load_user_input
@@ -184,6 +186,15 @@ def train(ab, c):
                   m = MixFormer_B6(
                   img_size=32,
                   class_num=CLASSNUM
+                  )
+            elif MODEL == 'HYBRID':
+                  m = LambdaMixFormer(
+                        img_size=32,
+                        # embed_dim=24,
+                        # depths=[1, 2, 6, 6],
+                        # num_heads=[3, 6, 12, 24],
+                        # drop_path_rate=0.,
+                        class_num=CLASSNUM,
                   )
             else:
                   raise NotImplementedError(f'Incorrect model name: {MODEL}')
@@ -449,31 +460,177 @@ if __name__ == '__main__':
             # 'SCHEDULER': 'const+cosine',  ######
             # 'EPOCHS': 200
             # },
+            # {
+            # 'MODEL': 'B1',
+            # 'DATASET': 'CIFAR10',
+            # 'DEBUG': False,
+            # 'LEARNING_RATE': 0.006,  ######
+            # 'W_DECAY': 0.04,
+            # 'WARMUP_EPOCHS': 50,
+            # 'WARMUP_LR': 1e-5,
+            # 'B1': 0.9,
+            # 'B2': 0.999,
+            # 'MIN_LR': 1e-6,
+            # 'BATCH_SIZE': 256,
+            # 'LOSS': 'Crossentropy',
+            # 'OPTIMIZER': 'AdamW',
+            # 'SCHEDULER': 'const+cosine',  ######
+            # 'EPOCHS': 200,
+            # 'VAL_SPLIT': False
+            # },
+            ######################## HYBRID
             {
-            'MODEL': 'B1',
+            'MODEL': 'HYBRID',
             'DATASET': 'CIFAR10',
             'DEBUG': False,
-            'LEARNING_RATE': 0.006,  ######
+            'LEARNING_RATE': 0.001,
             'W_DECAY': 0.04,
-            'WARMUP_EPOCHS': 50,
+            'WARMUP_EPOCHS': 20,
+            'WARMUP_LR': 0.001,
+            'B1': 0.9,
+            'B2': 0.999,
+            'MIN_LR': 1e-6,
+            'BATCH_SIZE': 128,
+            'LOSS': 'Crossentropy',
+            'OPTIMIZER': 'AdamW',
+            'SCHEDULER': 'const+cosine',
+            'EPOCHS': 200,
+            'VAL_SPLIT': True
+            },
+            {
+            'MODEL': 'HYBRID',
+            'DATASET': 'CIFAR10',
+            'DEBUG': False,
+            'LEARNING_RATE': 0.01,  ######
+            'W_DECAY': 0.04,
+            'WARMUP_EPOCHS': 20,
+            'WARMUP_LR': 0.01,
+            'B1': 0.9,
+            'B2': 0.999,
+            'MIN_LR': 1e-6,
+            'BATCH_SIZE': 128,
+            'LOSS': 'Crossentropy',
+            'OPTIMIZER': 'AdamW',
+            'SCHEDULER': 'const+cosine',
+            'EPOCHS': 200,
+            'VAL_SPLIT': True
+            },
+            {
+            'MODEL': 'HYBRID',
+            'DATASET': 'CIFAR10',
+            'DEBUG': False,
+            'LEARNING_RATE': 0.001,
+            'W_DECAY': 0.04,
+            'WARMUP_EPOCHS': 10, #####
+            'WARMUP_LR': 0.001,
+            'B1': 0.9,
+            'B2': 0.999,
+            'MIN_LR': 1e-6,
+            'BATCH_SIZE': 128,
+            'LOSS': 'Crossentropy',
+            'OPTIMIZER': 'AdamW',
+            'SCHEDULER': 'const+cosine',
+            'EPOCHS': 200,
+            'VAL_SPLIT': True
+            },
+############################################################# SCHEDULER
+            {
+            'MODEL': 'HYBRID',
+            'DATASET': 'CIFAR10',
+            'DEBUG': False,
+            'LEARNING_RATE': 0.001,
+            'W_DECAY': 0.04,
+            'WARMUP_EPOCHS': 20,
             'WARMUP_LR': 1e-5,
             'B1': 0.9,
             'B2': 0.999,
             'MIN_LR': 1e-6,
-            'BATCH_SIZE': 256,
+            'BATCH_SIZE': 128,
             'LOSS': 'Crossentropy',
             'OPTIMIZER': 'AdamW',
-            'SCHEDULER': 'const+cosine',  ######
+            'SCHEDULER': 'cosine',
             'EPOCHS': 200,
-            'VAL_SPLIT': False
+            'VAL_SPLIT': True
             },
-
+            {
+            'MODEL': 'HYBRID',
+            'DATASET': 'CIFAR10',
+            'DEBUG': False,
+            'LEARNING_RATE': 0.01,  ######
+            'W_DECAY': 0.04,
+            'WARMUP_EPOCHS': 20,
+            'WARMUP_LR': 1e-5,
+            'B1': 0.9,
+            'B2': 0.999,
+            'MIN_LR': 1e-6,
+            'BATCH_SIZE': 128,
+            'LOSS': 'Crossentropy',
+            'OPTIMIZER': 'AdamW',
+            'SCHEDULER': 'cosine',
+            'EPOCHS': 200,
+            'VAL_SPLIT': True
+            },
+            {
+            'MODEL': 'HYBRID',
+            'DATASET': 'CIFAR10',
+            'DEBUG': False,
+            'LEARNING_RATE': 0.001,
+            'W_DECAY': 0.04,
+            'WARMUP_EPOCHS': 10, #####
+            'WARMUP_LR': 1e-5,
+            'B1': 0.9,
+            'B2': 0.999,
+            'MIN_LR': 1e-6,
+            'BATCH_SIZE': 128,
+            'LOSS': 'Crossentropy',
+            'OPTIMIZER': 'AdamW',
+            'SCHEDULER': 'cosine',
+            'EPOCHS': 200,
+            'VAL_SPLIT': True
+            },
+            {
+            'MODEL': 'HYBRID',
+            'DATASET': 'CIFAR10',
+            'DEBUG': False,
+            'LEARNING_RATE': 0.01, #####
+            'W_DECAY': 0.04,
+            'WARMUP_EPOCHS': 10, #####
+            'WARMUP_LR': 1e-5,
+            'B1': 0.9,
+            'B2': 0.999,
+            'MIN_LR': 1e-6,
+            'BATCH_SIZE': 128,
+            'LOSS': 'Crossentropy',
+            'OPTIMIZER': 'AdamW',
+            'SCHEDULER': 'cosine',
+            'EPOCHS': 200,
+            'VAL_SPLIT': True
+            },
+            {
+            'MODEL': 'HYBRID',
+            'DATASET': 'CIFAR10',
+            'DEBUG': False,
+            'LEARNING_RATE': 0.01, #####
+            'W_DECAY': 0.04,
+            'WARMUP_EPOCHS': 10, #####
+            'WARMUP_LR': 0.01,
+            'B1': 0.9,
+            'B2': 0.999,
+            'MIN_LR': 1e-6,
+            'BATCH_SIZE': 128,
+            'LOSS': 'Crossentropy',
+            'OPTIMIZER': 'AdamW',
+            'SCHEDULER': 'const+cosine',
+            'EPOCHS': 200,
+            'VAL_SPLIT': True
+            },
       ]
-      # for config in configs:
-      #       # config['DEBUG'] = True
-      #       # config['EPOCHS'] = 1
-      #       train(0, 'CIFAR10', configs[0])
-      for ablation in range(7):
-            # configs[0]['DEBUG'] = True
-            # configs[0]['EPOCHS'] = 1
-            train(ablation,configs[0])
+      for config in configs:
+            config['DEBUG'] = False
+            config['EPOCHS'] = 150
+            config['BATCH_SIZE'] = 128
+            train(0, config)
+      # for ablation in range(7):
+      #       # configs[0]['DEBUG'] = True
+      #       # configs[0]['EPOCHS'] = 1
+      #       train(ablation,configs[0])
