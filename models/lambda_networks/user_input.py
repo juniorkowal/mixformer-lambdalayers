@@ -30,5 +30,6 @@ def load_user_input(dataset="CIFAR100", batch_size=128):
                         help='Initialisation value of the gamma parameter of the last BN layer')
     parser.add_argument('--cp_dir', type=str, default=".\\Checkpoints", help='Base checkpoint folder')
     parser.add_argument('--dataset', type=str, default=dataset, help='Dataset')
+    parser.add_argument('--dataset', type=str, default="CIFAR10", help='Dataset name used for base checkpoint folder')
 
     return parser.parse_args()
